@@ -74,7 +74,10 @@ export default function ShopPage() {
       setProducts(data || [])
       setLoading(false)
     }
-    load()
+    load().catch(() => {
+      setProducts([])
+      setLoading(false)
+    })
   }, [condition, sort, selectedBrand, selectedSize, search])
 
   const clearFilters = () => {

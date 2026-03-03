@@ -5,6 +5,9 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Sparkles, Clock, CheckCircle, Truck, Package, Wrench, Eye } from 'lucide-react'
+import { ShopHeader } from '@/components/layout/shop-header'
+import { Footer } from '@/components/layout/footer'
+import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav'
 import { formatDate } from '@/lib/utils'
 
 interface CleaningRequest {
@@ -30,7 +33,7 @@ const STATUS_LABELS: Record<string, string> = {
 }
 const STATUS_ICONS = [Clock, Eye, CheckCircle, Truck, Wrench, Sparkles, Package]
 
-const TIER_LABELS: Record<string, string> = { basic: 'Basic Clean', deep: 'Deep Clean', restoration: 'Full Restoration' }
+const TIER_LABELS: Record<string, string> = { cleaning: 'Sneaker Cleaning', cleaning_icing: 'Cleaning + Icing', basic: 'Basic Clean', deep: 'Deep Clean', restoration: 'Full Restoration' }
 
 export default function MyCleaningPage() {
   const router = useRouter()
@@ -57,15 +60,22 @@ export default function MyCleaningPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg)] px-4 py-8 max-w-2xl mx-auto">
-        <div className="skeleton h-6 w-40 mb-6" />
-        <div className="space-y-3">{[1, 2].map(i => <div key={i} className="skeleton h-32 w-full rounded-xl" />)}</div>
+      <div className="min-h-screen flex flex-col">
+        <ShopHeader />
+        <main className="flex-1 pt-24 px-4 max-w-2xl mx-auto w-full">
+          <div className="skeleton h-6 w-40 mb-6" />
+          <div className="space-y-3">{[1, 2].map(i => <div key={i} className="skeleton h-32 w-full rounded-xl" />)}</div>
+        </main>
+        <Footer />
+        <MobileBottomNav />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] px-4 py-8 max-w-2xl mx-auto pb-mobile-nav">
+    <div className="min-h-screen flex flex-col">
+      <ShopHeader />
+      <main className="flex-1 pt-24 px-4 max-w-2xl mx-auto w-full pb-mobile-nav">
       <Link href="/account" className="inline-flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-white transition-colors mb-6">
         <ArrowLeft size={16} /> Account
       </Link>
@@ -176,6 +186,9 @@ export default function MyCleaningPage() {
           })}
         </div>
       )}
+      </main>
+      <Footer />
+      <MobileBottomNav />
     </div>
   )
 }

@@ -5,6 +5,9 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save, Eye, EyeOff } from 'lucide-react'
+import { ShopHeader } from '@/components/layout/shop-header'
+import { Footer } from '@/components/layout/footer'
+import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav'
 import { toast } from 'sonner'
 
 interface Profile {
@@ -104,15 +107,22 @@ export default function AccountSettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg)] px-4 py-8 max-w-2xl mx-auto">
-        <div className="skeleton h-6 w-40 mb-6" />
-        <div className="skeleton h-96 w-full rounded-2xl" />
+      <div className="min-h-screen flex flex-col">
+        <ShopHeader />
+        <main className="flex-1 pt-24 px-4 max-w-2xl mx-auto w-full">
+          <div className="skeleton h-6 w-40 mb-6" />
+          <div className="skeleton h-96 w-full rounded-2xl" />
+        </main>
+        <Footer />
+        <MobileBottomNav />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] px-4 py-8 max-w-2xl mx-auto pb-mobile-nav">
+    <div className="min-h-screen flex flex-col">
+      <ShopHeader />
+      <main className="flex-1 pt-24 px-4 max-w-2xl mx-auto w-full pb-mobile-nav">
       <Link href="/account" className="inline-flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-white transition-colors mb-6">
         <ArrowLeft size={16} />
         Account
@@ -207,6 +217,9 @@ export default function AccountSettingsPage() {
           {savingPw ? 'Updating...' : 'Update Password'}
         </button>
       </form>
+      </main>
+      <Footer />
+      <MobileBottomNav />
     </div>
   )
 }

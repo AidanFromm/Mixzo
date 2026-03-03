@@ -67,14 +67,19 @@ export default function HomePage() {
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
-        .from('products')
-        .select('id, name, brand, price, size, condition, image_url, status')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(12)
-      setProducts(data || [])
-      setLoading(false)
+      try {
+        const { data } = await supabase
+          .from('products')
+          .select('id, name, brand, price, size, condition, image_url, status')
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(12)
+        setProducts(data || [])
+      } catch {
+        // Silently fail — empty state will show
+      } finally {
+        setLoading(false)
+      }
     }
     load()
   }, [])

@@ -5,8 +5,10 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Package, Settings, ShoppingBag, User, ChevronRight, LogOut, Sparkles, Heart, DollarSign } from 'lucide-react'
+import { ShopHeader } from '@/components/layout/shop-header'
+import { Footer } from '@/components/layout/footer'
+import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav'
 import { formatPrice, formatDate } from '@/lib/utils'
-import { CONDITION_LABELS } from '@/lib/constants'
 
 interface Profile {
   full_name: string
@@ -60,12 +62,17 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg)] px-4 py-8 max-w-2xl mx-auto">
-        <div className="skeleton h-8 w-48 mb-8" />
-        <div className="skeleton h-32 w-full rounded-2xl mb-6" />
-        <div className="space-y-3">
-          {[1, 2, 3].map(i => <div key={i} className="skeleton h-20 w-full rounded-xl" />)}
-        </div>
+      <div className="min-h-screen flex flex-col">
+        <ShopHeader />
+        <main className="flex-1 pt-24 px-4 max-w-2xl mx-auto w-full">
+          <div className="skeleton h-8 w-48 mb-8" />
+          <div className="skeleton h-32 w-full rounded-2xl mb-6" />
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => <div key={i} className="skeleton h-20 w-full rounded-xl" />)}
+          </div>
+        </main>
+        <Footer />
+        <MobileBottomNav />
       </div>
     )
   }
@@ -80,7 +87,9 @@ export default function AccountPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] px-4 py-8 max-w-2xl mx-auto pb-mobile-nav">
+    <div className="min-h-screen flex flex-col">
+      <ShopHeader />
+      <main className="flex-1 pt-24 px-4 max-w-2xl mx-auto w-full pb-mobile-nav">
       <h1 className="text-2xl font-bold text-white mb-6">My Account</h1>
 
       {/* Profile card */}
@@ -169,6 +178,9 @@ export default function AccountPage() {
         <LogOut size={16} />
         Sign Out
       </button>
+      </main>
+      <Footer />
+      <MobileBottomNav />
     </div>
   )
 }

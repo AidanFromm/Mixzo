@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Loader2, DollarSign, TrendingUp, Package, ShoppingCart, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { formatPrice } from '@/lib/utils'
+import { toast } from 'sonner'
 import dynamic from 'next/dynamic'
 
 const Charts = dynamic(
@@ -162,6 +163,7 @@ export default function AnalyticsPage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true)
+      try {
       const days = range === '7d' ? 7 : range === '30d' ? 30 : range === '90d' ? 90 : 365
       const since = new Date()
       since.setDate(since.getDate() - days)
@@ -240,6 +242,10 @@ export default function AnalyticsPage() {
         avgOrderValue, inventoryValue, inventoryCost,
         revenueData, topProducts, brandData, conditionData, ordersByDay,
       })
+      } catch (err) {
+        console.error('Analytics load error:', err)
+        toast.error('Failed to load analytics')
+      }
       setLoading(false)
     }
     load()

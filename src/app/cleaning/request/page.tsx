@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, Check, Upload, X, Sparkles, Droplets, Wrench, Package } from 'lucide-react'
 import { toast } from 'sonner'
@@ -11,21 +11,22 @@ import { Footer } from '@/components/layout/footer'
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav'
 
 const TIERS = [
-  { id: 'basic', name: 'Basic Clean', price: 25, icon: Droplets, desc: 'Surface clean, deodorize, lace wash', time: '3-5 days' },
-  { id: 'deep', name: 'Deep Clean', price: 45, icon: Sparkles, desc: 'Full deep clean, sole restoration, whitening', time: '5-7 days' },
-  { id: 'restoration', name: 'Full Restoration', price: 75, icon: Wrench, desc: 'Complete restoration, repaint, sole swap if needed', time: '7-14 days' },
+  { id: 'cleaning', name: 'Sneaker Cleaning', price: 20, icon: Droplets, desc: 'Full exterior clean, lace cleaning, deodorize', time: '2-3 days' },
+  { id: 'cleaning_icing', name: 'Cleaning + Icing', price: 30, icon: Sparkles, desc: 'Full deep clean, sole icing & whitening, sanitize', time: '3-7 days' },
 ]
 
 export default function CleaningRequestPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
 
-  // Form state
-  const [tier, setTier] = useState('')
+  // Form state — pre-select tier from query param if provided
+  const initialTier = searchParams.get('tier') || ''
+  const [tier, setTier] = useState(TIERS.some(t => t.id === initialTier) ? initialTier : '')
   const [photos, setPhotos] = useState<string[]>([])
   const [address, setAddress] = useState({ name: '', line1: '', line2: '', city: '', state: '', zip: '' })
   const [useSaved, setUseSaved] = useState(false)
@@ -194,7 +195,7 @@ export default function CleaningRequestPage() {
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <p className="font-semibold text-white">{t.name}</p>
-                          <p className="text-lg font-bold text-[var(--pink)]">${t.price}{t.id === 'restoration' ? '+' : ''}</p>
+                          <p className="text-lg font-bold text-[var(--pink)]">${t.price}</p>
                         </div>
                         <p className="text-sm text-[var(--text-secondary)] mt-1">{t.desc}</p>
                         <p className="text-xs text-[var(--text-muted)] mt-1">Turnaround: {t.time}</p>
@@ -276,7 +277,7 @@ export default function CleaningRequestPage() {
                 <h3 className="text-sm font-semibold text-white mb-3">Service</h3>
                 <div className="flex justify-between">
                   <span className="text-sm text-[var(--text-secondary)]">{selectedTier.name}</span>
-                  <span className="text-sm font-bold text-[var(--pink)]">${selectedTier.price}{selectedTier.id === 'restoration' ? '+' : ''}</span>
+                  <span className="text-sm font-bold text-[var(--pink)]">${selectedTier.price}</span>
                 </div>
               </div>
               <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-5">

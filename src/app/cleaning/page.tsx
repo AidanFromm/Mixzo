@@ -144,7 +144,7 @@ export default function CleaningPage() {
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                 </Link>
-                <Link href="/account/cleaning/new">
+                <Link href="/cleaning/request">
                   <Button size="lg" variant="outline" className="border-[#00C2D6]/30 text-[#00C2D6] hover:border-[#00C2D6]/60 hover:text-[#00C2D6]">
                     Submit Request
                   </Button>
@@ -271,7 +271,7 @@ export default function CleaningPage() {
                         ))}
                       </ul>
 
-                      <Link href={`/account/cleaning/new?tier=${tier.value}`} className="block">
+                      <Link href={`/cleaning/request?tier=${tier.value}`} className="block">
                         <Button
                           variant={tier.popular ? 'primary' : 'outline'}
                           className={`w-full ${!tier.popular ? 'border-[#00C2D6]/30 text-[#00C2D6] hover:border-[#00C2D6]/60 hover:bg-[#00C2D6]/5' : ''}`}
@@ -375,7 +375,7 @@ export default function CleaningPage() {
               <Droplets className="w-8 h-8 text-[#00C2D6] mx-auto mb-4" />
               <h2 className="text-2xl font-black mb-3">Ready to Refresh Your Kicks?</h2>
               <p className="text-text-secondary mb-8 max-w-md mx-auto">Submit a request and we&apos;ll take care of the rest. Professional results, every time.</p>
-              <Link href="/account/cleaning/new">
+              <Link href="/cleaning/request">
                 <Button size="lg" className="bg-[#00C2D6] hover:bg-[#00A8BA] shadow-lg shadow-[#00C2D6]/20">
                   Submit Request
                   <ArrowRight className="w-4 h-4" />

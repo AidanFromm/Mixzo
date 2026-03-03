@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Minus, Plus, X, ShoppingBag, ArrowLeft, AlertTriangle } from 'lucide-react'
+import { Minus, Plus, X, ShoppingBag, ArrowLeft, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react'
 import { useCartStore } from '@/stores/cart'
 import { ShopHeader } from '@/components/layout/shop-header'
 import { Footer } from '@/components/layout/footer'
@@ -12,13 +12,42 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatPrice } from '@/lib/utils'
 import { FREE_SHIPPING_THRESHOLD } from '@/lib/constants'
+import { toast } from 'sonner'
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, getTotal } = useCartStore()
   const [discountCode, setDiscountCode] = useState('')
+  const [discountLoading, setDiscountLoading] = useState(false)
+  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; percent: number } | null>(null)
   const subtotal = getTotal()
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 14.99
-  const total = subtotal + shipping
+  const discountAmount = appliedDiscount ? subtotal * (appliedDiscount.percent / 100) : 0
+  const afterDiscount = subtotal - discountAmount
+  const shipping = afterDiscount >= FREE_SHIPPING_THRESHOLD ? 0 : 14.99
+  const total = afterDiscount + shipping
+
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) return
+    setDiscountLoading(true)
+    try {
+      const res = await fetch('/api/discounts/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: discountCode.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.valid) {
+        toast.error(data.error || 'Invalid discount code')
+        setAppliedDiscount(null)
+      } else {
+        setAppliedDiscount({ code: discountCode.trim().toUpperCase(), percent: data.percent })
+        toast.success(`Discount applied: ${data.percent}% off`)
+      }
+    } catch {
+      toast.error('Could not validate discount code')
+    } finally {
+      setDiscountLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -82,27 +111,47 @@ export default function CartPage() {
                 <div className="rounded-xl bg-card border border-border p-6 sticky top-20 space-y-4">
                   <h3 className="font-semibold text-lg">Order Summary</h3>
 
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Discount code"
-                      value={discountCode}
-                      onChange={(e) => setDiscountCode(e.target.value)}
-                    />
-                    <Button variant="secondary" size="sm" className="shrink-0">Apply</Button>
-                  </div>
+                  {appliedDiscount ? (
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-400" />
+                        <span className="text-sm font-medium text-green-400">{appliedDiscount.code}</span>
+                        <span className="text-xs text-green-400/70">({appliedDiscount.percent}% off)</span>
+                      </div>
+                      <button onClick={() => { setAppliedDiscount(null); setDiscountCode('') }} className="text-xs text-text-muted hover:text-red-400 transition-colors">Remove</button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Discount code"
+                        value={discountCode}
+                        onChange={(e) => setDiscountCode(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleApplyDiscount()}
+                      />
+                      <Button variant="secondary" size="sm" className="shrink-0" onClick={handleApplyDiscount} disabled={discountLoading}>
+                        {discountLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Apply'}
+                      </Button>
+                    </div>
+                  )}
 
                   <div className="space-y-2 pt-2 border-t border-border">
                     <div className="flex justify-between text-sm">
                       <span className="text-text-secondary">Subtotal</span>
                       <span>{formatPrice(subtotal)}</span>
                     </div>
+                    {appliedDiscount && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-green-400">Discount ({appliedDiscount.percent}%)</span>
+                        <span className="text-green-400">-{formatPrice(discountAmount)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-text-secondary">Shipping</span>
                       <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
                     </div>
-                    {subtotal < FREE_SHIPPING_THRESHOLD && subtotal > 0 && (
+                    {afterDiscount < FREE_SHIPPING_THRESHOLD && afterDiscount > 0 && (
                       <p className="text-xs text-cyan">
-                        Add {formatPrice(FREE_SHIPPING_THRESHOLD - subtotal)} more for free shipping
+                        Add {formatPrice(FREE_SHIPPING_THRESHOLD - afterDiscount)} more for free shipping
                       </p>
                     )}
                   </div>

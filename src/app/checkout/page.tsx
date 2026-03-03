@@ -8,6 +8,7 @@ import { ArrowLeft, AlertTriangle, Lock, CreditCard, Sparkles, Droplets } from '
 import { useCartStore } from '@/stores/cart'
 import { ShopHeader } from '@/components/layout/shop-header'
 import { Footer } from '@/components/layout/footer'
+import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatPrice, generateOrderId } from '@/lib/utils'
@@ -85,6 +86,7 @@ export default function CheckoutPage() {
           <Link href="/shop"><Button>Shop Now</Button></Link>
         </main>
         <Footer />
+        <MobileBottomNav />
       </div>
     )
   }
@@ -92,7 +94,7 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <ShopHeader />
-      <main className="flex-1 pt-24 px-6 md:px-12 lg:px-16 pb-12">
+      <main className="flex-1 pt-24 px-6 md:px-12 lg:px-16 pb-12 pb-mobile-nav">
         <div className="max-w-5xl mx-auto">
           <Link href="/cart" className="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors mb-6">
             <ArrowLeft className="w-4 h-4" /> Back to Cart
@@ -228,6 +230,7 @@ export default function CheckoutPage() {
         </div>
       </main>
       <Footer />
+      <MobileBottomNav />
     </div>
   )
 }

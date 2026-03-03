@@ -5,6 +5,9 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Package, ShoppingBag } from 'lucide-react'
+import { ShopHeader } from '@/components/layout/shop-header'
+import { Footer } from '@/components/layout/footer'
+import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav'
 import { formatPrice, formatDate } from '@/lib/utils'
 
 interface Order {
@@ -46,17 +49,24 @@ export default function OrderHistoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg)] px-4 py-8 max-w-2xl mx-auto">
-        <div className="skeleton h-6 w-32 mb-6" />
-        <div className="space-y-3">
-          {[1, 2, 3, 4].map(i => <div key={i} className="skeleton h-24 w-full rounded-xl" />)}
-        </div>
+      <div className="min-h-screen flex flex-col">
+        <ShopHeader />
+        <main className="flex-1 pt-24 px-4 max-w-2xl mx-auto w-full">
+          <div className="skeleton h-6 w-32 mb-6" />
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map(i => <div key={i} className="skeleton h-24 w-full rounded-xl" />)}
+          </div>
+        </main>
+        <Footer />
+        <MobileBottomNav />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] px-4 py-8 max-w-2xl mx-auto pb-mobile-nav">
+    <div className="min-h-screen flex flex-col">
+      <ShopHeader />
+      <main className="flex-1 pt-24 px-4 max-w-2xl mx-auto w-full pb-mobile-nav">
       <Link href="/account" className="inline-flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-white transition-colors mb-6">
         <ArrowLeft size={16} />
         Account
@@ -103,6 +113,9 @@ export default function OrderHistoryPage() {
           })}
         </div>
       )}
+      </main>
+      <Footer />
+      <MobileBottomNav />
     </div>
   )
 }
