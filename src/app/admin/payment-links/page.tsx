@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link2, CreditCard, ExternalLink, Zap, Shield, Copy, Plus, DollarSign, Clock, CheckCircle, Trash2, Search, Send, Eye, Hash, ArrowUpRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { formatPrice } from '@/lib/utils'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
 import { SITE_URL } from '@/lib/constants'
 
 interface PaymentLink {
@@ -14,19 +15,37 @@ interface PaymentLink {
   amount: number
   status: 'active' | 'paid' | 'expired' | 'cancelled'
   url: string
-  customerName?: string
-  customerEmail?: string
+  customer_name?: string
+  customer_email?: string
   note?: string
-  createdAt: string
-  paidAt?: string
+  created_at: string
+  paid_at?: string
   views: number
 }
 
 export default function PaymentLinksPage() {
   const [links, setLinks] = useState<PaymentLink[]>([])
+  const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'active' | 'paid' | 'expired'>('all')
+
+  useEffect(() => { loadLinks() }, [])
+
+  async function loadLinks() {
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token
+      const res = await fetch('/api/admin/payment-links', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      if (res.ok) setLinks(data.payment_links || [])
+      else toast.error('Failed to load payment links')
+    } catch {
+      toast.error('Failed to load payment links')
+    }
+    setLoading(false)
+  }
 
   // Create form
   const [title, setTitle] = useState('')
@@ -40,19 +59,14 @@ export default function PaymentLinksPage() {
     .filter(l => {
       if (!search) return true
       const q = search.toLowerCase()
-      return l.title.toLowerCase().includes(q) || l.customerName?.toLowerCase().includes(q) || l.customerEmail?.toLowerCase().includes(q)
+      return l.title?.toLowerCase().includes(q) || l.customer_name?.toLowerCase().includes(q) || l.customer_email?.toLowerCase().includes(q)
     })
 
   const totalCollected = links.filter(l => l.status === 'paid').reduce((s, l) => s + l.amount, 0)
   const totalPending = links.filter(l => l.status === 'active').reduce((s, l) => s + l.amount, 0)
   const paidCount = links.filter(l => l.status === 'paid').length
 
-  function generateLink(): string {
-    const id = Math.random().toString(36).slice(2, 10).toUpperCase()
-    return `${SITE_URL}/pay/${id}`
-  }
-
-  function handleCreate() {
+  async function handleCreate() {
     const parsedAmount = parseFloat(amount)
     if (!title.trim()) {
       toast.error('Title is required')
@@ -63,27 +77,30 @@ export default function PaymentLinksPage() {
       return
     }
 
-    const newLink: PaymentLink = {
-      id: crypto.randomUUID(),
-      title: title.trim(),
-      amount: parsedAmount,
-      status: 'active',
-      url: generateLink(),
-      customerName: customerName.trim() || undefined,
-      customerEmail: customerEmail.trim() || undefined,
-      note: note.trim() || undefined,
-      createdAt: new Date().toISOString(),
-      views: 0,
+    try {
+      const linkId = Math.random().toString(36).slice(2, 10).toUpperCase()
+      const token = (await supabase.auth.getSession()).data.session?.access_token
+      const res = await fetch('/api/admin/payment-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          title: title.trim(),
+          amount: parsedAmount,
+          url: `${SITE_URL}/pay/${linkId}`,
+          customer_name: customerName.trim() || null,
+          customer_email: customerEmail.trim() || null,
+          note: note.trim() || null,
+          views: 0,
+        }),
+      })
+      if (!res.ok) throw new Error('Failed')
+      setShowCreate(false)
+      setTitle(''); setAmount(''); setCustomerName(''); setCustomerEmail(''); setNote('')
+      toast.success('Payment link created!')
+      loadLinks()
+    } catch {
+      toast.error('Failed to create payment link')
     }
-
-    setLinks(prev => [newLink, ...prev])
-    setShowCreate(false)
-    setTitle('')
-    setAmount('')
-    setCustomerName('')
-    setCustomerEmail('')
-    setNote('')
-    toast.success('Payment link created!')
   }
 
   function copyLink(url: string) {
@@ -91,14 +108,22 @@ export default function PaymentLinksPage() {
     toast.success('Link copied!')
   }
 
-  function markPaid(id: string) {
-    setLinks(prev => prev.map(l => l.id === id ? { ...l, status: 'paid' as const, paidAt: new Date().toISOString() } : l))
+  async function markPaid(id: string) {
+    const { error } = await supabase.from('payment_links').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', id)
+    if (error) { toast.error('Failed to update'); return }
+    setLinks(prev => prev.map(l => l.id === id ? { ...l, status: 'paid' as const, paid_at: new Date().toISOString() } : l))
     toast.success('Marked as paid')
   }
 
-  function cancelLink(id: string) {
-    setLinks(prev => prev.map(l => l.id === id ? { ...l, status: 'cancelled' as const } : l))
-    toast('Link cancelled')
+  async function cancelLink(id: string) {
+    const token = (await supabase.auth.getSession()).data.session?.access_token
+    const res = await fetch(`/api/admin/payment-links?id=${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) { toast.error('Failed to delete'); return }
+    setLinks(prev => prev.filter(l => l.id !== id))
+    toast.success('Link deleted')
   }
 
   const statusColors: Record<string, { text: string; bg: string; border: string; dot: string }> = {
@@ -106,6 +131,16 @@ export default function PaymentLinksPage() {
     paid: { text: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20', dot: 'bg-green-400' },
     expired: { text: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', dot: 'bg-yellow-400' },
     cancelled: { text: 'text-[var(--text-muted)]', bg: 'bg-white/5', border: 'border-white/10', dot: 'bg-gray-500' },
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-4 page-enter max-w-4xl">
+        <div className="h-8 w-48 shimmer rounded-xl" />
+        <div className="grid grid-cols-3 gap-3">{[1,2,3].map(i => <div key={i} className="h-28 shimmer rounded-2xl" />)}</div>
+        <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-24 shimmer rounded-2xl" />)}</div>
+      </div>
+    )
   }
 
   return (
@@ -380,15 +415,15 @@ export default function PaymentLinksPage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
-                          {link.customerName && (
-                            <span className="text-xs text-[var(--text-muted)]">{link.customerName}</span>
+                          {link.customer_name && (
+                            <span className="text-xs text-[var(--text-muted)]">{link.customer_name}</span>
                           )}
                           <span className="text-[10px] text-[var(--text-muted)] flex items-center gap-1">
-                            <Clock size={10} /> {new Date(link.createdAt).toLocaleDateString()}
+                            <Clock size={10} /> {new Date(link.created_at).toLocaleDateString()}
                           </span>
-                          {link.paidAt && (
+                          {link.paid_at && (
                             <span className="text-[10px] text-green-400 flex items-center gap-1">
-                              <CheckCircle size={10} /> Paid {new Date(link.paidAt).toLocaleDateString()}
+                              <CheckCircle size={10} /> Paid {new Date(link.paid_at).toLocaleDateString()}
                             </span>
                           )}
                         </div>

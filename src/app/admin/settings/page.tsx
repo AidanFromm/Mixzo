@@ -11,27 +11,34 @@ import { cn } from '@/lib/utils'
 export default function SettingsPage() {
   const [user, setUser] = useState<any>(null)
   const [role, setRole] = useState('')
+  const [loading, setLoading] = useState(true)
   const [stockxStatus, setStockxStatus] = useState<'checking' | 'ok' | 'error'>('checking')
 
   useEffect(() => {
     const load = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        setUser(session.user)
-        const res = await fetch('/api/auth/role', {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        })
-        const data = await res.json()
-        setRole(data.role || 'unknown')
-      }
-
       try {
-        const res = await fetch('/api/stockx/status')
-        const data = await res.json()
-        setStockxStatus(data.connected ? 'ok' : 'error')
-      } catch {
-        setStockxStatus('error')
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          setUser(session.user)
+          const res = await fetch('/api/auth/role', {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          })
+          const data = await res.json()
+          setRole(data.role || 'unknown')
+        }
+
+        try {
+          const res = await fetch('/api/stockx/status')
+          const data = await res.json()
+          setStockxStatus(data.connected ? 'ok' : 'error')
+        } catch {
+          setStockxStatus('error')
+        }
+      } catch (err) {
+        console.error('Settings load error:', err)
+        toast.error('Failed to load settings')
       }
+      setLoading(false)
     }
     load()
   }, [])
@@ -43,6 +50,17 @@ export default function SettingsPage() {
     { icon: Instagram, label: 'Instagram', value: BUSINESS_INSTAGRAM },
     { icon: MapPin, label: 'Location', value: BUSINESS_LOCATION },
   ]
+
+  if (loading) {
+    return (
+      <div className="space-y-4 page-enter max-w-3xl">
+        <div className="h-8 w-48 shimmer rounded-xl" />
+        <div className="h-64 shimmer rounded-2xl" />
+        <div className="h-48 shimmer rounded-2xl" />
+        <div className="h-32 shimmer rounded-2xl" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6 page-enter max-w-3xl">

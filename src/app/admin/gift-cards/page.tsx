@@ -1,26 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Gift, Plus, CreditCard, Sparkles, DollarSign, Hash, Copy, CheckCircle, Trash2, Eye, EyeOff, Clock, Search } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { formatPrice } from '@/lib/utils'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
 
 interface GiftCard {
   id: string
   code: string
-  initialBalance: number
-  currentBalance: number
+  initial_balance: number
+  current_balance: number
   status: 'active' | 'redeemed' | 'expired' | 'disabled'
-  recipientEmail?: string
+  recipient_email?: string
   note?: string
-  createdAt: string
-  expiresAt?: string
+  created_at: string
+  expires_at?: string
 }
-
-// Demo data for UI showcase (no backend yet)
-const DEMO_CARDS: GiftCard[] = []
 
 const PRESETS = [25, 50, 75, 100, 150, 200, 250, 500]
 
@@ -35,10 +33,24 @@ function generateCode(): string {
 }
 
 export default function GiftCardsPage() {
-  const [cards, setCards] = useState<GiftCard[]>(DEMO_CARDS)
+  const [cards, setCards] = useState<GiftCard[]>([])
+  const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'active' | 'redeemed' | 'expired'>('all')
+
+  useEffect(() => { loadCards() }, [])
+
+  async function loadCards() {
+    try {
+      const { data, error } = await supabase.from('gift_cards').select('*').order('created_at', { ascending: false })
+      if (error) throw error
+      setCards(data || [])
+    } catch {
+      toast.error('Failed to load gift cards')
+    }
+    setLoading(false)
+  }
 
   // Create form state
   const [amount, setAmount] = useState(50)
@@ -52,37 +64,39 @@ export default function GiftCardsPage() {
     .filter(c => {
       if (!search) return true
       const q = search.toLowerCase()
-      return c.code.toLowerCase().includes(q) || c.recipientEmail?.toLowerCase().includes(q)
+      return c.code.toLowerCase().includes(q) || c.recipient_email?.toLowerCase().includes(q)
     })
 
-  const totalIssued = cards.reduce((s, c) => s + c.initialBalance, 0)
-  const totalOutstanding = cards.filter(c => c.status === 'active').reduce((s, c) => s + c.currentBalance, 0)
-  const totalRedeemed = cards.filter(c => c.status === 'redeemed').reduce((s, c) => s + c.initialBalance, 0)
+  const totalIssued = cards.reduce((s, c) => s + (c.initial_balance || 0), 0)
+  const totalOutstanding = cards.filter(c => c.status === 'active').reduce((s, c) => s + (c.current_balance || 0), 0)
+  const totalRedeemed = cards.filter(c => c.status === 'redeemed').reduce((s, c) => s + (c.initial_balance || 0), 0)
 
-  function handleCreate() {
+  async function handleCreate() {
     const finalAmount = customAmount ? parseFloat(customAmount) : amount
     if (!finalAmount || finalAmount < 5 || finalAmount > 1000) {
       toast.error('Amount must be between $5 and $1,000')
       return
     }
 
-    const newCard: GiftCard = {
-      id: crypto.randomUUID(),
-      code: generateCode(),
-      initialBalance: finalAmount,
-      currentBalance: finalAmount,
-      status: 'active',
-      recipientEmail: recipientEmail || undefined,
-      note: note || undefined,
-      createdAt: new Date().toISOString(),
+    try {
+      const { error } = await supabase.from('gift_cards').insert({
+        code: generateCode(),
+        initial_balance: finalAmount,
+        current_balance: finalAmount,
+        status: 'active',
+        recipient_email: recipientEmail || null,
+        note: note || null,
+      })
+      if (error) throw error
+      setShowCreate(false)
+      setCustomAmount('')
+      setRecipientEmail('')
+      setNote('')
+      toast.success('Gift card created!')
+      loadCards()
+    } catch {
+      toast.error('Failed to create gift card')
     }
-
-    setCards(prev => [newCard, ...prev])
-    setShowCreate(false)
-    setCustomAmount('')
-    setRecipientEmail('')
-    setNote('')
-    toast.success(`Gift card created: ${newCard.code}`)
   }
 
   function copyCode(code: string) {
@@ -104,6 +118,16 @@ export default function GiftCardsPage() {
     redeemed: { text: 'text-[var(--text-muted)]', bg: 'bg-white/5', border: 'border-white/10' },
     expired: { text: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
     disabled: { text: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' },
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-4 page-enter max-w-4xl">
+        <div className="h-8 w-48 shimmer rounded-xl" />
+        <div className="grid grid-cols-3 gap-3">{[1,2,3].map(i => <div key={i} className="h-28 shimmer rounded-2xl" />)}</div>
+        <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-24 shimmer rounded-2xl" />)}</div>
+      </div>
+    )
   }
 
   return (
@@ -323,7 +347,7 @@ export default function GiftCardsPage() {
             {filtered.map((card, i) => {
               const colors = statusColors[card.status] || statusColors.active
               const isRevealed = revealedCodes.has(card.id)
-              const usagePercent = card.initialBalance > 0 ? Math.round((1 - card.currentBalance / card.initialBalance) * 100) : 0
+              const usagePercent = card.initial_balance > 0 ? Math.round((1 - card.current_balance / card.initial_balance) * 100) : 0
               return (
                 <motion.div
                   key={card.id}
@@ -358,11 +382,11 @@ export default function GiftCardsPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-3 mt-1">
-                          {card.recipientEmail && (
-                            <span className="text-xs text-[var(--text-muted)]">{card.recipientEmail}</span>
+                          {card.recipient_email && (
+                            <span className="text-xs text-[var(--text-muted)]">{card.recipient_email}</span>
                           )}
                           <span className="text-[10px] text-[var(--text-muted)] flex items-center gap-1">
-                            <Clock size={10} /> {new Date(card.createdAt).toLocaleDateString()}
+                            <Clock size={10} /> {new Date(card.created_at).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
@@ -370,9 +394,9 @@ export default function GiftCardsPage() {
 
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="text-lg font-black text-white font-mono">{formatPrice(card.currentBalance)}</p>
-                        {card.currentBalance !== card.initialBalance && (
-                          <p className="text-[10px] text-[var(--text-muted)]">of {formatPrice(card.initialBalance)} · {usagePercent}% used</p>
+                        <p className="text-lg font-black text-white font-mono">{formatPrice(card.current_balance)}</p>
+                        {card.current_balance !== card.initial_balance && (
+                          <p className="text-[10px] text-[var(--text-muted)]">of {formatPrice(card.initial_balance)} · {usagePercent}% used</p>
                         )}
                       </div>
                       <span className={cn(

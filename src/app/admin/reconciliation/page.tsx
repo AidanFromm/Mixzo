@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { formatPrice } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 export default function ReconciliationPage() {
   const [loading, setLoading] = useState(true)
@@ -25,10 +26,12 @@ export default function ReconciliationPage() {
   }, [])
 
   async function load() {
-    const [{ data: products }, { data: orders }] = await Promise.all([
+    try {
+    const [{ data: products, error: prodErr }, { data: orders, error: ordErr }] = await Promise.all([
       supabase.from('products').select('price, cost, quantity').eq('status', 'active'),
       supabase.from('orders').select('total, items, status').neq('status', 'cancelled'),
     ])
+    if (prodErr || ordErr) toast.error('Failed to load reconciliation data')
 
     const prods = products || []
     const ords = orders || []
@@ -57,6 +60,10 @@ export default function ReconciliationPage() {
       ordersCount: ords.length,
       missingCost,
     })
+    } catch (err) {
+      console.error('Reconciliation load error:', err)
+      toast.error('Failed to load data')
+    }
     setLoading(false)
   }
 

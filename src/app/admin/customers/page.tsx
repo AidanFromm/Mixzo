@@ -7,6 +7,7 @@ import { Search, Users, User, Mail, Phone, ShoppingBag, DollarSign, TrendingUp, 
 import { formatDate, formatPrice, timeAgo } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface Customer {
   id: string
@@ -36,10 +37,12 @@ export default function CustomersPage() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: profiles }, { data: orders }] = await Promise.all([
+      try {
+      const [{ data: profiles, error: profilesErr }, { data: orders, error: ordersErr }] = await Promise.all([
         supabase.from('profiles').select('*').eq('role', 'customer').order('created_at', { ascending: false }),
         supabase.from('orders').select('customer_id, total, created_at, status').neq('status', 'cancelled'),
       ])
+      if (profilesErr || ordersErr) toast.error('Failed to load customer data')
 
       setCustomers(profiles || [])
 
@@ -57,6 +60,10 @@ export default function CustomersPage() {
         }
       }
       setOrderMap(map)
+      } catch (err) {
+        console.error('Customers load error:', err)
+        toast.error('Failed to load customers')
+      }
       setLoading(false)
     }
     load()
