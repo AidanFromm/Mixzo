@@ -124,11 +124,13 @@ export default function AdminDashboard() {
   const [recentProducts, setRecentProducts] = useState<any[]>([])
   const [chartData, setChartData] = useState<any[]>([])
   const [topProducts, setTopProducts] = useState<any[]>([])
+  const [pipelineCounts, setPipelineCounts] = useState<Record<string, number>>({})
 
   useEffect(() => { load() }, [timeRange])
 
   async function load() {
     setLoading(true)
+    try {
     const numDays = timeRange === '1d' ? 1 : timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : timeRange === '90d' ? 90 : 365
     const since = new Date(Date.now() - numDays * 86400000).toISOString()
 
@@ -179,6 +181,11 @@ export default function AdminDashboard() {
     }
     const top = Object.values(productSales).sort((a, b) => b.rev - a.rev).slice(0, 5)
 
+    // Pipeline counts from all orders (not just recent 5)
+    const pipeline: Record<string, number> = {}
+    for (const o of allOrders) pipeline[o.status] = (pipeline[o.status] || 0) + 1
+    setPipelineCounts(pipeline)
+
     setRevenue(rev)
     setOrderCount(allOrders.length)
     setProductCount(products.length)
@@ -193,6 +200,9 @@ export default function AdminDashboard() {
     setRecentProducts(products.slice(0, 6))
     setChartData(chart)
     setTopProducts(top)
+    } catch (err) {
+      console.error('Dashboard load error:', err)
+    }
     setLoading(false)
   }
 
@@ -453,11 +463,11 @@ export default function AdminDashboard() {
         </div>
         <div className="grid grid-cols-5 gap-3">
           {[
-            { label: 'Pending', icon: Clock, count: recentOrders.filter(o => o.status === 'pending').length, color: '#F59E0B', bg: '#F59E0B' },
-            { label: 'Processing', icon: Activity, count: recentOrders.filter(o => ['confirmed','processing'].includes(o.status)).length, color: '#3B82F6', bg: '#3B82F6' },
-            { label: 'Shipped', icon: Truck, count: recentOrders.filter(o => o.status === 'shipped').length, color: '#00C2D6', bg: '#00C2D6' },
-            { label: 'Delivered', icon: CheckCircle, count: recentOrders.filter(o => o.status === 'delivered').length, color: '#10B981', bg: '#10B981' },
-            { label: 'Cancelled', icon: XCircle, count: recentOrders.filter(o => o.status === 'cancelled').length, color: '#EF4444', bg: '#EF4444' },
+            { label: 'Pending', icon: Clock, count: pipelineCounts['pending'] || 0, color: '#F59E0B', bg: '#F59E0B' },
+            { label: 'Processing', icon: Activity, count: (pipelineCounts['confirmed'] || 0) + (pipelineCounts['processing'] || 0), color: '#3B82F6', bg: '#3B82F6' },
+            { label: 'Shipped', icon: Truck, count: pipelineCounts['shipped'] || 0, color: '#00C2D6', bg: '#00C2D6' },
+            { label: 'Delivered', icon: CheckCircle, count: pipelineCounts['delivered'] || 0, color: '#10B981', bg: '#10B981' },
+            { label: 'Cancelled', icon: XCircle, count: pipelineCounts['cancelled'] || 0, color: '#EF4444', bg: '#EF4444' },
           ].map(s => (
             <div key={s.label} className="text-center py-4 rounded-2xl bg-[#0F0F13] border border-[#1E1E26]/50 hover:border-[#1E1E26] transition-all duration-300 group">
               <div className="w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center transition-all duration-500 group-hover:scale-110" style={{ backgroundColor: `${s.bg}10` }}>

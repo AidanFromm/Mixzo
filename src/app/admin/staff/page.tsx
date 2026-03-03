@@ -6,6 +6,7 @@ import { Users, Plus, Shield, UserCog, User, Clock, Mail } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface Staff { id: string; full_name: string; email: string; role: string; last_sign_in_at?: string; created_at: string }
 
@@ -22,7 +23,11 @@ export default function StaffPage() {
 
   useEffect(() => {
     supabase.from('profiles').select('*').in('role', ['owner', 'manager', 'staff']).order('created_at', { ascending: true })
-      .then(({ data }) => { setStaff(data || []); setLoading(false) })
+      .then(({ data, error }) => {
+        if (error) toast.error('Failed to load staff')
+        setStaff(data || [])
+        setLoading(false)
+      })
   }, [])
 
   if (loading) {
@@ -41,7 +46,10 @@ export default function StaffPage() {
           <h1 className="text-2xl font-black text-white tracking-tight">Staff</h1>
           <p className="text-sm text-[var(--text-muted)]">{staff.length} team member{staff.length !== 1 ? 's' : ''}</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF2E88] text-white text-sm font-bold hover:bg-[#FF2E88]/90 transition-all shadow-lg shadow-[#FF2E88]/20 active:scale-[0.97]">
+        <button
+          onClick={() => toast.info('To add staff, invite them via Supabase Auth and assign their role in the profiles table')}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF2E88] text-white text-sm font-bold hover:bg-[#FF2E88]/90 transition-all shadow-lg shadow-[#FF2E88]/20 active:scale-[0.97]"
+        >
           <Plus size={16} /> Add Staff
         </button>
       </div>

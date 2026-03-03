@@ -5,6 +5,7 @@ import { Star, Search, MessageSquare, ThumbsUp, ThumbsDown, Filter, CheckCircle,
 import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface Review {
   id: string
@@ -37,6 +38,13 @@ export default function ReviewsPage() {
       setReviews([])
     }
     setLoading(false)
+  }
+
+  async function updateStatus(id: string, status: 'approved' | 'rejected') {
+    const { error } = await supabase.from('reviews').update({ status }).eq('id', id)
+    if (error) { toast.error('Failed to update review'); return }
+    setReviews(prev => prev.map(r => r.id === id ? { ...r, status } : r))
+    toast.success(`Review ${status}`)
   }
 
   const filtered = reviews
@@ -180,10 +188,10 @@ export default function ReviewsPage() {
                   {review.status}
                 </span>
                 <div className="flex items-center gap-2">
-                  <button className="p-2 rounded-lg hover:bg-green-500/10 text-[var(--text-muted)] hover:text-green-400 transition-all">
+                  <button onClick={() => updateStatus(review.id, 'approved')} className="p-2 rounded-lg hover:bg-green-500/10 text-[var(--text-muted)] hover:text-green-400 transition-all" title="Approve">
                     <ThumbsUp size={14} />
                   </button>
-                  <button className="p-2 rounded-lg hover:bg-red-500/10 text-[var(--text-muted)] hover:text-red-400 transition-all">
+                  <button onClick={() => updateStatus(review.id, 'rejected')} className="p-2 rounded-lg hover:bg-red-500/10 text-[var(--text-muted)] hover:text-red-400 transition-all" title="Reject">
                     <ThumbsDown size={14} />
                   </button>
                 </div>

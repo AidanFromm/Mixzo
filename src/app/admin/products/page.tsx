@@ -181,9 +181,9 @@ export default function ProductsPage() {
           </Link>
         </div>
       ) : (
-        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden">
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden overflow-x-auto">
           {/* Table Header */}
-          <div className="hidden md:grid grid-cols-[1fr_100px_80px_100px_80px_60px_80px] gap-2 px-4 py-3 border-b border-[var(--border)] text-xs font-medium text-[var(--text-muted)]">
+          <div className="hidden md:grid grid-cols-[1fr_100px_80px_100px_80px_60px_80px] gap-2 px-4 py-3 border-b border-[var(--border)] text-xs font-medium text-[var(--text-muted)] min-w-[640px]">
             <span>Product</span>
             <span>Condition</span>
             <span>Sizes</span>
@@ -204,7 +204,7 @@ export default function ProductsPage() {
                 <div
                   onClick={() => hasVariants ? setExpandedGroup(isExpanded ? null : g.name) : null}
                   className={cn(
-                    'grid grid-cols-[1fr_100px_80px_100px_80px_60px_80px] gap-2 px-4 py-3 items-center border-b border-[var(--border)] transition-colors',
+                    'grid grid-cols-[1fr_100px_80px_100px_80px_60px_80px] gap-2 px-4 py-3 items-center border-b border-[var(--border)] transition-colors min-w-[640px]',
                     hasVariants ? 'cursor-pointer hover:bg-white/[0.02]' : '',
                     isExpanded ? 'bg-white/[0.02]' : ''
                   )}
@@ -253,7 +253,7 @@ export default function ProductsPage() {
                 {isExpanded && hasVariants && (
                   <div className="bg-[var(--bg)]/50">
                     {g.variants.map(v => (
-                      <div key={v.id} className="grid grid-cols-[1fr_100px_80px_100px_80px_60px_80px] gap-2 px-4 py-2.5 items-center border-b border-[var(--border)]/50 ml-8">
+                      <div key={v.id} className="grid grid-cols-[1fr_100px_80px_100px_80px_60px_80px] gap-2 px-4 py-2.5 items-center border-b border-[var(--border)]/50 ml-8 min-w-[640px]">
                         <div className="flex items-center gap-2">
                           <div className="w-1.5 h-1.5 rounded-full bg-[var(--pink)]/40" />
                           <span className="text-sm text-[var(--text-secondary)]">Size {v.size}</span>

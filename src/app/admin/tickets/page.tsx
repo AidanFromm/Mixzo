@@ -154,9 +154,12 @@ export default function TicketsPage() {
         ))}
       </div>
 
-      <div className="flex gap-4 h-[calc(100vh-240px)] min-h-[400px]">
+      <div className="flex flex-col lg:flex-row gap-4 lg:h-[calc(100vh-240px)] min-h-[400px]">
         {/* Ticket List */}
-        <div className="w-[400px] shrink-0 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden flex flex-col">
+        <div className={cn(
+          'w-full lg:w-[400px] shrink-0 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden flex flex-col',
+          selectedTicket ? 'hidden lg:flex' : 'flex'
+        )}>
           {loading ? (
             <div className="p-4 space-y-2">{[1,2,3].map(i => <div key={i} className="h-20 shimmer rounded-lg" />)}</div>
           ) : filtered.length === 0 ? (
@@ -197,14 +200,22 @@ export default function TicketsPage() {
         </div>
 
         {/* Conversation Panel */}
-        <div className="flex-1 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden flex flex-col">
+        <div className={cn(
+          'flex-1 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden flex flex-col',
+          !selectedTicket ? 'hidden lg:flex' : 'flex'
+        )}>
           {selectedTicket ? (
             <>
               {/* Header */}
               <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
-                <div>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setSelectedTicket(null)} className="lg:hidden p-1.5 rounded-lg hover:bg-white/5 text-[var(--text-muted)]">
+                    <ChevronRight size={16} className="rotate-180" />
+                  </button>
+                  <div>
                   <h2 className="text-base font-semibold text-white">{selectedTicket.subject}</h2>
                   <p className="text-xs text-[var(--text-muted)]">{selectedTicket.customer_name} — {selectedTicket.customer_email}</p>
+                  </div>
                 </div>
                 <select
                   value={selectedTicket.status}

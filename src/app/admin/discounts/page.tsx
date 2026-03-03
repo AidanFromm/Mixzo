@@ -47,13 +47,16 @@ export default function DiscountsPage() {
   }
 
   async function toggleActive(id: string, active: boolean) {
-    await supabase.from('discounts').update({ active: !active }).eq('id', id)
+    const { error } = await supabase.from('discounts').update({ active: !active }).eq('id', id)
+    if (error) { toast.error('Failed to update'); return }
+    toast.success(active ? 'Deactivated' : 'Activated')
     loadData()
   }
 
   async function deleteDiscount(id: string) {
     if (!confirm('Delete this discount code?')) return
-    await supabase.from('discounts').delete().eq('id', id)
+    const { error } = await supabase.from('discounts').delete().eq('id', id)
+    if (error) { toast.error('Failed to delete'); return }
     toast.success('Deleted')
     loadData()
   }

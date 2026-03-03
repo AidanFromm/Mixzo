@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { formatPrice } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface Product { id: string; name: string; price: number; stockx_id?: string; market_price?: number; image_url?: string }
 
@@ -22,8 +23,23 @@ export default function PriceSyncPage() {
 
   const handleSync = async () => {
     setSyncing(true)
-    await new Promise(r => setTimeout(r, 2000))
-    setLastSync(new Date().toLocaleString())
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token
+      const res = await fetch('/api/admin/price-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ product_ids: products.map(p => p.id) }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Sync failed')
+      toast.success(`Synced ${data.synced}/${data.total} products`)
+      setLastSync(new Date().toLocaleString())
+      // Reload products to show updated market prices
+      const { data: updated } = await supabase.from('products').select('id, name, price, stockx_id, market_price, image_url').eq('status', 'active').not('stockx_id', 'is', null)
+      if (updated) setProducts(updated)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Price sync failed')
+    }
     setSyncing(false)
   }
 

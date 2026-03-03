@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { formatPrice } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 import Link from 'next/link'
 
 export default function ShippingPage() {
@@ -21,7 +22,8 @@ export default function ShippingPage() {
     if (filter === 'pending') query = query.in('status', ['pending', 'confirmed', 'processing'])
     else if (filter === 'shipped') query = query.eq('status', 'shipped')
     else if (filter === 'delivered') query = query.eq('status', 'delivered')
-    const { data } = await query
+    const { data, error } = await query
+    if (error) toast.error('Failed to load orders')
     setOrders(data || [])
     setLoading(false)
   }
