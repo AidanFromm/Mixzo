@@ -39,13 +39,18 @@ export function ProductCard({ product }: ProductCardProps) {
       >
         <div className="aspect-square relative bg-[#1A1A22] overflow-hidden">
           {product.image_url ? (
-            <Image
-              src={product.image_url}
-              alt={product.name}
-              fill
-              className="object-contain p-4 transition-all duration-700 ease-out group-hover:scale-110 group-hover:rotate-[-2deg]"
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            />
+            <>
+              <Image
+                src={product.image_url}
+                alt={product.name}
+                fill
+                className="object-contain p-6 transition-all duration-700 ease-out group-hover:scale-110 group-hover:rotate-[-2deg] mix-blend-multiply dark:mix-blend-normal"
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                style={{ filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.4))' }}
+              />
+              {/* Vignette to blend white-bg images */}
+              <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_10px_rgba(26,26,34,0.7)]" />
+            </>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <span className="text-[#6A6A80] text-sm">No Image</span>
