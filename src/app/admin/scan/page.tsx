@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Keyboard, Camera, Search, Loader2, Check, X, Package, RotateCcw, Sparkles, ShoppingBag, Box, ImagePlus, Zap, ScanBarcode, ArrowRight, ChevronRight, Tag } from 'lucide-react'
+import { Keyboard, Camera, Search, Loader2, Check, X, Package, RotateCcw, Sparkles, ShoppingBag, Box, ImagePlus, Zap, ScanBarcode, ArrowRight, ChevronRight, Tag, VideoOff } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
@@ -30,6 +30,7 @@ interface ProductResult {
 
 import { SizeSelector } from '@/components/ui/size-selector'
 import { SizeCategory } from '@/lib/constants'
+import { Html5Qrcode } from 'html5-qrcode'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -57,6 +58,10 @@ export default function ScanPage() {
 
   const [selectedSize, setSelectedSize] = useState('')
   const [sizeCategory, setSizeCategory] = useState<SizeCategory>('MEN')
+  const [cameraActive, setCameraActive] = useState(false)
+  const [cameraError, setCameraError] = useState('')
+  const scannerRef = useRef<Html5Qrcode | null>(null)
+  const cameraContainerId = 'barcode-camera-reader'
   const [condition, setCondition] = useState<'new' | 'preowned'>('new')
   const [hasBox, setHasBox] = useState(true)
   const [price, setPrice] = useState('')
@@ -227,6 +232,87 @@ export default function ScanPage() {
     }).catch(() => {})
   }
 
+  // Camera barcode scanning
+  const startCamera = useCallback(async () => {
+    setCameraError('')
+    try {
+      const scanner = new Html5Qrcode(cameraContainerId)
+      scannerRef.current = scanner
+      await scanner.start(
+        { facingMode: 'environment' },
+        {
+          fps: 10,
+          qrbox: { width: 280, height: 150 },
+          aspectRatio: 1.5,
+        },
+        (decodedText) => {
+          // Barcode scanned — stop camera and process
+          scanner.stop().then(() => {
+            setCameraActive(false)
+            scannerRef.current = null
+          }).catch(() => {})
+          // Set barcode and switch to scan tab
+          setBarcode(decodedText)
+          setTab('scan')
+          // Auto-search with the barcode
+          setScanState('looking_up')
+          fetch(`/api/stockx/search?q=${encodeURIComponent(decodedText)}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.results?.length > 0) {
+                const p = data.results[0]
+                setResult({
+                  id: p.id || decodedText,
+                  name: p.name,
+                  brand: p.brand || '',
+                  colorway: p.colorway || null,
+                  styleId: p.styleId || '',
+                  size: p.size || null,
+                  imageUrl: p.image || p.thumbnail || p.imageUrl || '',
+                  imageUrls: p.images || p.imageUrls || [],
+                  retailPrice: p.retailPrice,
+                  source: p.source || 'goat',
+                  goatProductId: p.goatProductId || p.id,
+                  availableSizes: p.availableSizes,
+                })
+                setScanState('found')
+              } else {
+                setScanState('not_found')
+                setTab('search')
+                setSearchQuery(decodedText)
+              }
+            })
+            .catch(() => {
+              setScanState('not_found')
+              setTab('search')
+              setSearchQuery(decodedText)
+            })
+        },
+        () => {} // ignore scan failures (expected while aiming)
+      )
+      setCameraActive(true)
+    } catch (err: any) {
+      console.error('Camera error:', err)
+      setCameraError(err?.message || 'Camera access denied. Check browser permissions.')
+    }
+  }, [])
+
+  const stopCamera = useCallback(() => {
+    if (scannerRef.current) {
+      scannerRef.current.stop().catch(() => {})
+      scannerRef.current = null
+    }
+    setCameraActive(false)
+  }, [])
+
+  // Cleanup camera on unmount or tab change
+  useEffect(() => {
+    if (tab !== 'camera') {
+      stopCamera()
+    }
+    return () => { stopCamera() }
+  }, [tab, stopCamera])
+
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
     setSearching(true)
@@ -339,7 +425,7 @@ export default function ScanPage() {
 
   const tabs = [
     { id: 'scan' as Tab, label: 'Scan / Type', icon: ScanBarcode, desc: 'UPC or Style ID' },
-    { id: 'camera' as Tab, label: 'Camera', icon: Camera, desc: 'Coming soon' },
+    { id: 'camera' as Tab, label: 'Camera', icon: Camera, desc: 'Scan barcode' },
     { id: 'search' as Tab, label: 'Search', icon: Search, desc: 'By name' },
   ]
 
@@ -576,15 +662,59 @@ export default function ScanPage() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-12 text-center relative overflow-hidden"
+            className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl overflow-hidden relative"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-[#00C2D6]/5 to-[#FF2E88]/5 pointer-events-none" />
-            <div className="relative">
-              <div className="w-20 h-20 rounded-3xl bg-[#00C2D6]/10 border border-[#00C2D6]/20 flex items-center justify-center mx-auto mb-5">
-                <Camera size={32} className="text-[#00C2D6]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#00C2D6]/5 to-[#FF2E88]/5 pointer-events-none z-0" />
+            <div className="relative z-10 p-6">
+              {!cameraActive && !cameraError && (
+                <div className="text-center py-8">
+                  <div className="w-20 h-20 rounded-3xl bg-[#00C2D6]/10 border border-[#00C2D6]/20 flex items-center justify-center mx-auto mb-5">
+                    <Camera size={32} className="text-[#00C2D6]" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white mb-2">Camera Barcode Scanner</h3>
+                  <p className="text-sm text-[var(--text-secondary)] max-w-sm mx-auto mb-6">Point your camera at a barcode to scan it instantly</p>
+                  <button
+                    onClick={startCamera}
+                    className="bg-[#FF2E88] hover:bg-[#FF2E88]/90 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-lg shadow-[#FF2E88]/25 cursor-pointer"
+                  >
+                    <Camera size={16} className="inline mr-2 -mt-0.5" />
+                    Start Camera
+                  </button>
+                </div>
+              )}
+
+              {cameraError && (
+                <div className="text-center py-8">
+                  <div className="w-20 h-20 rounded-3xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-5">
+                    <VideoOff size={32} className="text-red-400" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white mb-2">Camera Unavailable</h3>
+                  <p className="text-sm text-red-400 max-w-sm mx-auto mb-4">{cameraError}</p>
+                  <button
+                    onClick={() => { setCameraError(''); startCamera() }}
+                    className="bg-[#1A1A22] hover:bg-[#1E1E26] text-white font-semibold px-6 py-2.5 rounded-xl border border-[#1E1E26] transition-all cursor-pointer"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
+
+              {/* Camera viewfinder */}
+              <div className={cn('rounded-xl overflow-hidden', !cameraActive && 'hidden')}>
+                <div id={cameraContainerId} className="w-full" />
+                <div className="mt-4 flex items-center justify-between">
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    <Zap size={12} className="inline text-[#00C2D6] mr-1" />
+                    Point at any barcode — auto-detects UPC, EAN, Code128
+                  </p>
+                  <button
+                    onClick={stopCamera}
+                    className="text-xs text-red-400 hover:text-red-300 font-semibold cursor-pointer"
+                  >
+                    Stop Camera
+                  </button>
+                </div>
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">Camera Scanning</h3>
-              <p className="text-sm text-[var(--text-secondary)] max-w-sm mx-auto">Coming soon — use a USB barcode scanner or type the UPC manually for now</p>
             </div>
           </motion.div>
         )}
