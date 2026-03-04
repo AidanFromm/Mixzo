@@ -64,6 +64,7 @@ async function getStockXProductDetail(productId: string) {
 }
 
 async function searchGOAT(query: string, limit: number) {
+  // Fetch with distinct: false to get ALL size variants, then group by product
   const res = await fetch(`https://${GOAT_ALGOLIA_APP}-dsn.algolia.net/1/indexes/product_variants_v2/query`, {
     method: 'POST',
     headers: {
@@ -71,21 +72,29 @@ async function searchGOAT(query: string, limit: number) {
       'x-algolia-application-id': GOAT_ALGOLIA_APP,
       'x-algolia-api-key': GOAT_ALGOLIA_KEY,
     },
-    body: JSON.stringify({ query, hitsPerPage: Math.min(limit * 5, 100), distinct: true, attributesToRetrieve: ['product_template_id', 'name', 'product_title', 'brand_name', 'color', 'retail_price_cents', 'sku', 'main_picture_url', 'picture_url', 'slug'] }),
+    body: JSON.stringify({
+      query,
+      hitsPerPage: Math.min(limit * 10, 100),
+      distinct: false,
+      attributesToRetrieve: ['product_template_id', 'name', 'product_title', 'brand_name', 'color', 'retail_price_cents', 'sku', 'main_picture_url', 'picture_url', 'size', 'slug'],
+    }),
   })
   if (!res.ok) return null
   const data = await res.json()
-  const seen = new Set<string>()
-  return (data.hits || [])
-    .filter((h: any) => {
-      // Dedup by product_template_id (groups all sizes of same shoe)
-      const k = h.product_template_id || h.sku || h.name
-      if (seen.has(k)) return false
-      seen.add(k)
-      return true
-    })
+
+  // Group variants by product_template_id to collect all sizes
+  const grouped = new Map<string, { hit: any; sizes: Set<string> }>()
+  for (const h of (data.hits || [])) {
+    const pid = String(h.product_template_id || h.sku || h.name)
+    if (!grouped.has(pid)) {
+      grouped.set(pid, { hit: h, sizes: new Set() })
+    }
+    if (h.size) grouped.get(pid)!.sizes.add(String(h.size))
+  }
+
+  return Array.from(grouped.values())
     .slice(0, limit)
-    .map((h: any) => ({
+    .map(({ hit: h, sizes }) => ({
       id: h.product_template_id || h.id || '',
       name: h.name || h.product_title || '',
       brand: h.brand_name || '',
@@ -94,6 +103,7 @@ async function searchGOAT(query: string, limit: number) {
       styleId: h.sku || '',
       image: h.main_picture_url || h.picture_url || '',
       thumb: h.main_picture_url || h.picture_url || '',
+      availableSizes: Array.from(sizes).sort((a, b) => parseFloat(a) - parseFloat(b)),
     }))
 }
 

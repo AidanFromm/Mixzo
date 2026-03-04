@@ -23,6 +23,7 @@ interface ProductResult {
   imageUrls: string[]
   source: 'cache' | 'goat' | 'upc' | 'stockx'
   goatProductId?: string
+  availableSizes?: string[]
 }
 
 // Fetch StockX product detail for sizes + better images
@@ -99,6 +100,7 @@ export default function ScanPage() {
       imageUrls: [p.image || p.thumb || p.imageUrl || ''].filter(Boolean),
       source,
       goatProductId: p.goatProductId || p.id,
+      availableSizes: p.availableSizes || undefined,
     })
 
     try {
@@ -251,8 +253,9 @@ export default function ScanPage() {
       retailPrice: p.retailPrice || null,
       imageUrl: p.image || p.thumb || '',
       imageUrls: [p.image || p.thumb || ''].filter(Boolean),
-      source: 'stockx',
+      source: 'goat',
       goatProductId: p.id,
+      availableSizes: p.availableSizes || undefined,
     }
 
     setResult(product)
@@ -703,10 +706,12 @@ export default function ScanPage() {
               <div className="relative">
                 <label className="text-xs text-[var(--text-secondary)] mb-3 block font-semibold uppercase tracking-wider">
                   Size {selectedSize && <span className="text-[#FF2E88] normal-case tracking-normal">— {selectedSize}</span>}
-                  
+                  {result?.availableSizes && result.availableSizes.length > 0 && (
+                    <span className="text-[#00C2D6] ml-2 normal-case tracking-normal">{result.availableSizes.length} available</span>
+                  )}
                 </label>
                 <motion.div variants={stagger} initial="hidden" animate="visible" className="grid grid-cols-7 sm:grid-cols-9 gap-1.5">
-                  {SNEAKER_SIZES.map(s => (
+                  {(result?.availableSizes && result.availableSizes.length > 0 ? result.availableSizes : SNEAKER_SIZES).map(s => (
                     <motion.button
                       key={s}
                       variants={scaleIn}
