@@ -9,7 +9,7 @@ function getResend(): Resend {
   return _resend
 }
 
-const FROM_ADDRESS = `${SITE_NAME} <onboarding@resend.dev>`
+const FROM_ADDRESS = process.env.RESEND_FROM_EMAIL || `${SITE_NAME} <onboarding@resend.dev>`
 
 // Brand colors
 const PINK = '#FF2E88'
