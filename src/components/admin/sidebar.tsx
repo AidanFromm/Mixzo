@@ -7,7 +7,7 @@ import {
   LayoutDashboard, ScanBarcode, Package, ShoppingCart,
   Users, Flame, BarChart3, Settings, Menu, X, LogOut,
   Tag, FileText, Boxes, Truck,
-  Activity, Star, Link2, Gift, HelpCircle, Calculator, RefreshCw,
+  Activity, Star, Link2, Gift, HelpCircle, Calculator, 
   Receipt, Bell, UserCog, Sparkles, ExternalLink, MessageSquare
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -27,7 +27,6 @@ const NAV_SECTIONS = [
     items: [
       { href: '/admin/products', label: 'Products', icon: Package },
       { href: '/admin/products/new', label: 'Add Product', icon: Boxes },
-      { href: '/admin/price-sync', label: 'Price Sync', icon: RefreshCw },
     ],
   },
   {
