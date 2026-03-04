@@ -12,9 +12,9 @@ export async function GET(request: Request) {
     const { data, error } = await supabaseAdmin.from('payment_links').select('*').order('created_at', { ascending: false })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ payment_links: data })
-  } catch (error) {
-    console.error('Payment links GET error:', error)
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  } catch (error: any) {
+    console.error('Payment links GET error:', error?.message)
+    return NextResponse.json({ error: error?.message || 'Server error' }, { status: 500 })
   }
 }
 
@@ -96,8 +96,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ payment_link: data }, { status: 201 })
   } catch (error: any) {
-    console.error('Payment links POST error:', error)
-    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 })
+    console.error('Payment links POST error:', error?.type, error?.message, error?.statusCode)
+    const msg = error?.message || 'Server error'
+    return NextResponse.json({ error: msg, type: error?.type || 'unknown' }, { status: 500 })
   }
 }
 
