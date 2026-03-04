@@ -186,7 +186,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               transition={{ duration: 0.8, ease: easeOutExpo }}
               className="space-y-4"
             >
-              <div className="aspect-square relative rounded-3xl bg-[#141418] border border-[#1E1E26] overflow-hidden group">
+              <div className="aspect-square relative rounded-3xl bg-gradient-to-br from-[#f0f0f0] via-[#e8e8e8] to-[#d8d8d8] border border-[#1E1E26] overflow-hidden group">
                 {gallery.length > 0 ? (
                   <>
                     <AnimatePresence mode="wait" initial={false}>
@@ -205,10 +205,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                           className="object-contain p-10 md:p-12"
                           sizes="(max-width: 768px) 100vw, 50vw"
                           priority
-                          style={{ filter: 'drop-shadow(0 8px 30px rgba(0,0,0,0.5))' }}
+                          style={{ filter: 'drop-shadow(0 8px 30px rgba(0,0,0,0.15))' }}
                         />
-                        {/* Vignette for white-bg images */}
-                        <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_60px_15px_rgba(20,20,24,0.6)]" />
                       </motion.div>
                     </AnimatePresence>
 
@@ -263,7 +261,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                         i === selectedImage ? 'border-[#FF2E88] shadow-lg shadow-[#FF2E88]/20' : 'border-[#1E1E26] hover:border-[#2A2A36]'
                       }`}
                     >
-                      <Image src={img} alt="" width={72} height={72} className="w-full h-full object-contain p-1.5 bg-[#141418] drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
+                      <Image src={img} alt="" width={72} height={72} className="w-full h-full object-contain p-1.5 bg-[#e8e8e8] drop-shadow-[0_2px_8px_rgba(0,0,0,0.1)]" />
                     </button>
                   ))}
                 </div>

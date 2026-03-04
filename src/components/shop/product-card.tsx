@@ -37,20 +37,16 @@ export function ProductCard({ product }: ProductCardProps) {
         onMouseMove={handleMouseMove}
         className="spotlight-card group rounded-2xl bg-[#141418] border border-[#1E1E26] overflow-hidden transition-all duration-500 hover:translate-y-[-6px] hover:shadow-[0_20px_60px_rgba(255,46,136,0.08)] hover:border-[#FF2E88]/20"
       >
-        <div className="aspect-square relative bg-[#1A1A22] overflow-hidden">
+        <div className="aspect-square relative bg-gradient-to-br from-[#f0f0f0] via-[#e8e8e8] to-[#d8d8d8] overflow-hidden">
           {product.image_url ? (
-            <>
-              <Image
-                src={product.image_url}
-                alt={product.name}
-                fill
-                className="object-contain p-6 transition-all duration-700 ease-out group-hover:scale-110 group-hover:rotate-[-2deg] mix-blend-multiply dark:mix-blend-normal"
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                style={{ filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.4))' }}
-              />
-              {/* Vignette to blend white-bg images */}
-              <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_10px_rgba(26,26,34,0.7)]" />
-            </>
+            <Image
+              src={product.image_url}
+              alt={product.name}
+              fill
+              className="object-contain p-5 transition-all duration-700 ease-out group-hover:scale-110 group-hover:rotate-[-2deg]"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              style={{ filter: 'drop-shadow(0 6px 20px rgba(0,0,0,0.15))' }}
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <span className="text-[#6A6A80] text-sm">No Image</span>
