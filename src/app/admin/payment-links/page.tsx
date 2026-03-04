@@ -93,13 +93,14 @@ export default function PaymentLinksPage() {
           views: 0,
         }),
       })
-      if (!res.ok) throw new Error('Failed')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
       setShowCreate(false)
       setTitle(''); setAmount(''); setCustomerName(''); setCustomerEmail(''); setNote('')
       toast.success('Payment link created!')
       loadLinks()
-    } catch {
-      toast.error('Failed to create payment link')
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to create payment link')
     }
   }
 
