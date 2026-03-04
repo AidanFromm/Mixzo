@@ -4,6 +4,8 @@ import { requireAdmin } from '@/lib/admin-auth'
 import { getStripe } from '@/lib/stripe'
 import { SITE_URL, SITE_NAME } from '@/lib/constants'
 
+export const runtime = 'nodejs'
+
 export async function GET(request: Request) {
   try {
     const user = await requireAdmin(request)
