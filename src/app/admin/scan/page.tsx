@@ -701,32 +701,30 @@ export default function ScanPage() {
                 </h3>
               </div>
 
-              {/* Size Grid */}
+              {/* Size — Auto-detected from barcode */}
               <div className="relative">
-                <label className="text-xs text-[var(--text-secondary)] mb-3 block font-semibold uppercase tracking-wider">
-                  Size {selectedSize && <span className="text-[#FF2E88] normal-case tracking-normal">— {selectedSize}</span>}
-                  {result?.availableSizes && result.availableSizes.length > 0 && (
-                    <span className="text-[#00C2D6] ml-2 normal-case tracking-normal">{result.availableSizes.length} available</span>
-                  )}
+                <label className="text-xs text-[var(--text-secondary)] mb-2.5 block font-semibold uppercase tracking-wider">
+                  Size
                 </label>
-                <motion.div variants={stagger} initial="hidden" animate="visible" className="grid grid-cols-7 sm:grid-cols-9 gap-1.5">
-                  {(result?.availableSizes && result.availableSizes.length > 0 ? result.availableSizes : SNEAKER_SIZES).map(s => (
-                    <motion.button
-                      key={s}
-                      variants={scaleIn}
-                      type="button"
-                      onClick={() => setSelectedSize(s)}
-                      className={cn(
-                        'py-2.5 rounded-xl text-xs font-bold transition-all duration-200 border',
-                        selectedSize === s
-                          ? 'bg-[#FF2E88] text-white border-[#FF2E88] shadow-lg shadow-[#FF2E88]/25 scale-105'
-                          : 'bg-[var(--bg)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[#FF2E88]/40 hover:text-white hover:bg-[#FF2E88]/5'
-                      )}
-                    >
-                      {s}
-                    </motion.button>
-                  ))}
-                </motion.div>
+                {selectedSize ? (
+                  <div className="flex items-center gap-3">
+                    <div className="bg-[#FF2E88] text-white text-2xl font-black px-6 py-3 rounded-2xl shadow-lg shadow-[#FF2E88]/25">
+                      {selectedSize}
+                    </div>
+                    <span className="text-xs text-[var(--text-muted)]">Auto-detected from barcode</span>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Enter size (e.g. 10.5)"
+                      value={selectedSize}
+                      onChange={(e) => setSelectedSize(e.target.value)}
+                      className="w-full px-4 py-3 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-white text-lg font-bold placeholder:text-[var(--text-muted)] placeholder:font-normal focus:border-[#FF2E88] focus:ring-1 focus:ring-[#FF2E88] outline-none transition-all"
+                    />
+                    <p className="text-[10px] text-[var(--text-muted)] mt-1.5">Scan barcode for auto-detection, or type manually</p>
+                  </div>
+                )}
               </div>
 
               {/* Condition + Box Row */}
@@ -804,39 +802,68 @@ export default function ScanPage() {
                     exit={{ opacity: 0, height: 0 }}
                     className="overflow-hidden"
                   >
-                    <label className="text-xs text-[var(--text-secondary)] mb-2.5 block font-semibold uppercase tracking-wider">
-                      Photos <span className="text-[var(--text-muted)] normal-case tracking-normal">(show actual condition)</span>
+                    <label className="text-xs text-[var(--text-secondary)] mb-3 block font-semibold uppercase tracking-wider">
+                      Photos <span className="text-[#FF2E88] normal-case tracking-normal">*required</span>
+                      <span className="text-[var(--text-muted)] normal-case tracking-normal ml-2">Show actual condition — top, sides, soles, flaws</span>
                     </label>
-                    <div className="flex flex-wrap gap-2">
-                      {photos.map((photo, i) => (
-                        <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-[var(--border)] group">
-                          <img src={photo} alt="" className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => removePhoto(i)}
-                            className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                          >
-                            <X size={16} className="text-white" />
-                          </button>
-                        </div>
-                      ))}
+
+                    {photos.length === 0 ? (
+                      /* Empty state — big upload zone */
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-20 h-20 rounded-xl border-2 border-dashed border-[var(--border)] flex flex-col items-center justify-center text-[var(--text-muted)] hover:border-[#00C2D6]/40 hover:text-[#00C2D6] transition-all duration-300"
+                        className="w-full py-12 rounded-2xl border-2 border-dashed border-[#FF2E88]/30 bg-[#FF2E88]/5 hover:bg-[#FF2E88]/10 hover:border-[#FF2E88]/50 flex flex-col items-center justify-center gap-3 transition-all duration-300 group"
                       >
-                        <ImagePlus size={20} />
-                        <span className="text-[10px] mt-1 font-medium">Add</span>
+                        <div className="w-14 h-14 rounded-2xl bg-[#FF2E88]/15 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <ImagePlus size={28} className="text-[#FF2E88]" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-bold text-white">Upload Photos</p>
+                          <p className="text-xs text-[var(--text-muted)] mt-1">Tap to select multiple • JPG, PNG, HEIC</p>
+                        </div>
                       </button>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={handlePhotoUpload}
-                      />
-                    </div>
+                    ) : (
+                      /* Photo grid — larger tiles */
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        {photos.map((photo, i) => (
+                          <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-[var(--border)] group hover:border-[#FF2E88]/40 transition-all">
+                            <img src={photo} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                            <div className="absolute top-1.5 left-1.5 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg">
+                              {i + 1}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removePhoto(i)}
+                              className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-red-500/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                            >
+                              <X size={14} className="text-white" />
+                            </button>
+                          </div>
+                        ))}
+                        {/* Add more button */}
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="aspect-square rounded-2xl border-2 border-dashed border-[var(--border)] flex flex-col items-center justify-center text-[var(--text-muted)] hover:border-[#00C2D6]/40 hover:text-[#00C2D6] hover:bg-[#00C2D6]/5 transition-all duration-300"
+                        >
+                          <ImagePlus size={24} />
+                          <span className="text-[10px] mt-1.5 font-bold">Add More</span>
+                        </button>
+                      </div>
+                    )}
+
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handlePhotoUpload}
+                    />
+
+                    {photos.length > 0 && (
+                      <p className="text-[10px] text-[var(--text-muted)] mt-2">{photos.length} photo{photos.length !== 1 ? 's' : ''} added • Tap photo to remove</p>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
