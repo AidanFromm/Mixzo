@@ -88,6 +88,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     })
   }
 
+  const [showCleaningUpsell, setShowCleaningUpsell] = useState(false)
+  const setCleaning = useCartStore((s) => s.setCleaning)
+
   const handleAddToCart = () => {
     if (!product) return
     addItem({
@@ -100,8 +103,25 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       image_url: gallery[0] || product.image_url,
     })
     setAddedToCart(true)
-    toast.success('Added to cart')
+
+    // Show cleaning upsell for preowned sneakers
+    if (product.condition && product.condition.toLowerCase() !== 'new' && product.condition.toLowerCase() !== 'ds') {
+      setShowCleaningUpsell(true)
+    } else {
+      toast.success('Added to cart')
+    }
     setTimeout(() => setAddedToCart(false), 2000)
+  }
+
+  const handleCleaningChoice = (tier: 'cleaning' | 'cleaning_icing' | null) => {
+    if (!product) return
+    if (tier) {
+      setCleaning(product.id, tier)
+      toast.success(tier === 'cleaning' ? 'Cleaning added (+$20)' : 'Cleaning + Icing added (+$30)')
+    } else {
+      toast.success('Added to cart')
+    }
+    setShowCleaningUpsell(false)
   }
 
   const handleShare = async () => {
@@ -413,6 +433,62 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       </main>
       <Footer />
       <MobileBottomNav />
+
+      {/* Cleaning Upsell Modal — shows for preowned sneakers */}
+      {showCleaningUpsell && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => handleCleaningChoice(null)} />
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            className="relative bg-[#141418] border border-[#1E1E26] rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md p-6 pb-8 sm:p-8 shadow-2xl"
+          >
+            <div className="w-10 h-1 bg-[#2A2A36] rounded-full mx-auto mb-6 sm:hidden" />
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 rounded-2xl bg-[#FF2E88]/10 border border-[#FF2E88]/20 flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">✨</span>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-1">Fresh it up?</h3>
+              <p className="text-sm text-[#6A6A80]">Add professional cleaning to your preowned pair</p>
+            </div>
+
+            <div className="space-y-3 mb-6">
+              <button
+                onClick={() => handleCleaningChoice('cleaning')}
+                className="w-full flex items-center justify-between p-4 rounded-2xl border border-[#1E1E26] bg-[#1A1A22] hover:border-[#FF2E88]/40 transition-all group cursor-pointer"
+              >
+                <div className="text-left">
+                  <p className="font-semibold text-white group-hover:text-[#FF2E88] transition-colors">Basic Cleaning</p>
+                  <p className="text-xs text-[#6A6A80] mt-0.5">Deep clean, deodorize, restore freshness</p>
+                </div>
+                <span className="text-[#FF2E88] font-bold text-lg">+$20</span>
+              </button>
+
+              <button
+                onClick={() => handleCleaningChoice('cleaning_icing')}
+                className="w-full flex items-center justify-between p-4 rounded-2xl border border-[#00C2D6]/30 bg-[#00C2D6]/5 hover:border-[#00C2D6]/60 transition-all group cursor-pointer"
+              >
+                <div className="text-left">
+                  <p className="font-semibold text-white group-hover:text-[#00C2D6] transition-colors">Cleaning + Sole Icing</p>
+                  <p className="text-xs text-[#6A6A80] mt-0.5">Full clean + yellowed sole restoration</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[#00C2D6] font-bold text-lg">+$30</span>
+                  <p className="text-[10px] text-[#00C2D6]/70 font-semibold">POPULAR</p>
+                </div>
+              </button>
+            </div>
+
+            <button
+              onClick={() => handleCleaningChoice(null)}
+              className="w-full py-3 text-sm text-[#6A6A80] hover:text-white font-medium transition-colors cursor-pointer"
+            >
+              No thanks, just the sneakers
+            </button>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }
