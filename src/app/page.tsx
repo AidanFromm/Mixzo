@@ -106,15 +106,27 @@ export default function HomePage() {
 
       {/* ─── Hero ─── */}
       <section ref={heroRef} className="relative pt-48 pb-32 md:pt-64 md:pb-52 px-6 md:px-12 lg:px-16 overflow-hidden">
-        {/* Parallax background */}
+        {/* Parallax video background */}
         <motion.div style={{ y: heroY }} className="absolute inset-0">
-          <div className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20" style={{ backgroundImage: 'url(/hero-bg.webp)' }} />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0C0C0C] via-[#0C0C0C]/40 to-[#0C0C0C]" />
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-25"
+            poster="/hero-bg.webp"
+          >
+            <source src="/hero-bg.mp4" type="video/mp4" />
+          </video>
+          {/* Gradient overlay for readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0C0C0C]/70 via-[#0C0C0C]/30 to-[#0C0C0C]" />
+          {/* Side fade for desktop */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0C0C0C]/80 via-transparent to-[#0C0C0C]/80 hidden md:block" />
         </motion.div>
 
         {/* Ambient glows */}
-        <div className="absolute top-20 left-1/4 w-[600px] h-[600px] rounded-full bg-[#FF2E88]/[0.04] blur-[150px] pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full bg-[#00C2D6]/[0.03] blur-[120px] pointer-events-none" />
+        <div className="absolute top-20 left-1/4 w-[600px] h-[600px] rounded-full bg-[#FF2E88]/[0.06] blur-[150px] pointer-events-none" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full bg-[#00C2D6]/[0.04] blur-[120px] pointer-events-none" />
 
         <motion.div style={{ opacity: heroOpacity }} className="max-w-7xl mx-auto relative">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
