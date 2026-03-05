@@ -168,10 +168,10 @@ export default function HomePage() {
                   </Button>
                 </Link>
                 <Link href="/cleaning">
-                  <Button variant="secondary" size="lg">
+                  <button className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-[#00C2D6] hover:bg-[#00C2D6]/90 text-white transition-all shadow-lg shadow-[#00C2D6]/25 cursor-pointer">
                     <Droplets className="w-4 h-4" />
                     Cleaning Service
-                  </Button>
+                  </button>
                 </Link>
               </motion.div>
             </div>
